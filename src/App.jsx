@@ -11,10 +11,8 @@ import GameOver from './components/GameOver'
 import TitleScreen from './components/TitleScreen'
 import PromotionModal from './components/PromotionModal'
 
-import win from './assets/win.mp3'
-import loss from './assets/loss.mp3'
-import move from './assets/move.mp4'
-import capture from './assets/capture2.mp4'
+import move from './assets/move.mp3'
+import capture from './assets/capture2.mp3'
 
 function App() {
     const navigate = useNavigate()
@@ -48,11 +46,8 @@ function App() {
         })
 
         socket.on('moveMade', (type) => {
-            if (type === 'capture') {
-                captureSound.play()
-            } else {
-                moveSound.play()
-            }
+            const audio = new Audio(type === 'capture' ? capture : move)
+            audio.play()
         })
 
         if (socket.connected) handleConnect()
