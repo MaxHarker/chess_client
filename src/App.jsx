@@ -45,7 +45,7 @@ function App() {
             setGameState(gameState)
         })
 
-        socket.on('moveMade', (type) => {
+        socket.on('moveMade', ({ type }) => {
             const audio = new Audio(type === 'capture' ? capture : move)
             audio.play()
         })
