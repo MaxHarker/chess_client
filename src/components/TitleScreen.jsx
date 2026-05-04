@@ -20,7 +20,7 @@ function TitleScreen({ setRoomID }) {
             }}>
                 Start Game
             </button>
-            <h3>Version 1.1.0</h3>
+            <h3>Version 1.1.1</h3>
         </div>
     )
 }

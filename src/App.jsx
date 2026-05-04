@@ -45,6 +45,14 @@ function App() {
             setGameState(gameState)
         })
 
+        socket.on('moveMade', (type) => {
+            if (type === 'capture') {
+                captureSound.play()
+            } else {
+                moveSound.play()
+            }
+        })
+
         if (socket.connected) handleConnect()
 
         return () => {

@@ -2,9 +2,6 @@ import './Chessboard.css'
 import Square from './Square'
 import { useState } from 'react'
 
-import move from '../assets/move.mp4'
-import capture from '../assets/capture2.mp4'
-
 import {
     legalMoves,
     isKingInCheck,
