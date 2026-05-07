@@ -16,7 +16,7 @@ function TitleScreen({ handleConnect }) {
             <button onClick={handleConnect}>
                 Start Game
             </button>
-            <h3>Version 1.1.6</h3>
+            <h3>Version 1.1.7</h3>
         </div>
     )
 }

@@ -45,3 +45,9 @@
     font-family: "Playfair Display", serif;
     color: #cccccc;
 }
+
+@media (max-width: 600px) {
+    .title-screen {
+        justify-content: flex-start;
+        padding-top: 100px;
+    }
