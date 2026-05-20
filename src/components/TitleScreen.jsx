@@ -22,7 +22,7 @@ function TitleScreen({ navigateLogin, navigateSignUp, navigateGuest }) {
                     </button>
                 </div>
             </div>
-            <h3>Version 1.2.0</h3>
+            <h3>Version 1.2.1</h3>
         </div>
     )
 }
