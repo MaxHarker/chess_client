@@ -26,12 +26,17 @@ function App() {
     const [playerColor, setPlayerColor] = useState(null)
     const [matchmaking, setMatchmaking] = useState(null)
     const [countdown, setCountdown] = useState(null)
+    const [queueNum, setQueueNum] = useState(0)
 
     useEffect(() => {
         socket.on('matchFound', ({ roomId, color }) => {
             setRoomID(roomId)
             setPlayerColor(color)
             console.log(`Match found! Room ID: ${roomId}, You are playing as ${color}`)
+        })
+
+        socket.on('queueUpdate', ({ queueNum }) => {
+            setQueueNum(queueNum)
         })
 
         socket.on('gameState', (state) => {
@@ -63,6 +68,7 @@ function App() {
 
         return () => {
             socket.off('matchFound')
+            socket.off('queueUpdate')
             socket.off('gameState')
             socket.off('gameStart')
             socket.off('moveMade')
@@ -167,7 +173,7 @@ function App() {
                             playerColor={playerColor}
                         />
 
-                        {matchmaking && <Matchmaking state={matchmaking} countdown={countdown} onCancel={handleRestart} />}
+                        {matchmaking && <Matchmaking state={matchmaking} countdown={countdown} queueNum={queueNum} onCancel={handleRestart} />}
 
                         {(gameState.status === 'checkmate' || gameState.status === 'stalemate') && (
                             <GameOver 

@@ -40,6 +40,18 @@
     font-weight: bold;
 }
 
+.matchmaking-modal h3 {
+    font-family: "Roboto", sans-serif;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.matchmaking-modal .dots {
+    display: inline-block;
+    width: 20px;
+    text-align: left;
+}
+
 .matchmaking-modal button {
     margin-top: 10px;
     padding: 10px 18px;
