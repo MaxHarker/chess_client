@@ -1,11 +1,7 @@
 import './Chessboard.css'
 import Square from './Square'
 
-import {
-    legalMoves,
-    isKingInCheck,
-    findKing
-} from '../logic/chessLogic'
+import { legalMoves, isKingInCheck, findKing } from '../logic/chessLogic'
 
 function Chessboard({
     gameState,
