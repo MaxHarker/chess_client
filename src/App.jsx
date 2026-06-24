@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { initialGameState } from './logic/initialGameState.js'
 import { hasLegalMoves, isKingInCheck } from './logic/chessLogic.js'
@@ -14,6 +14,7 @@ import Login from './components/Login'
 import SignUp from './components/SignUp'
 import PromotionModal from './components/PromotionModal'
 import Matchmaking from './components/Matchmaking'
+import Home from './components/Home'
 
 import move from './assets/move.mp3'
 import capture from './assets/capture2.mp3'
@@ -75,6 +76,17 @@ function App() {
         }
     }, [])
 
+    const location = useLocation();
+
+    useEffect(() => {
+        // Lock scroll on TitleScreen only
+        if (location.pathname === "/") {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "auto";
+        }
+    }, [location.pathname]);
+
     function handlePromotion(piece) {
         socket.emit('promotePawn', {
             roomId,
@@ -93,7 +105,7 @@ function App() {
         navigate('/')
     }
 
-    function handleConnect() {
+    function handleGameStart() {
         socket.emit('findMatch')
         setMatchmaking('searching')
         navigate('/game')
@@ -107,13 +119,12 @@ function App() {
         navigate('/signup')
     }
 
-    function navigateGuest() {
-        navigate('/game')
-        handleConnect()
-    }
-
     function navigateBack() {
         navigate('/')
+    }
+
+    function navigateHome() {
+        navigate('/home')
     }
 
     function handleSignUp(username, password, email) {
@@ -121,7 +132,7 @@ function App() {
             socket.emit('signUp', { username, password, email }, (response) => {
                 if (response.success) {
                     console.log('Sign up successful!')
-                    handleConnect()
+                    navigateHome()
                     resolve(null)
                 } else {
                     console.log('Sign up failed:', response.message)
@@ -136,7 +147,7 @@ function App() {
             socket.emit('login', { username, password }, (response) => {
                 if (response.success) {
                     console.log('Login successful!')
-                    handleConnect()
+                    navigateHome()
                     resolve(null)
                 } else {
                     console.log('Login failed:', response.message)
@@ -150,7 +161,7 @@ function App() {
         <Routes>
             <Route
                 path="/"
-                element={<TitleScreen navigateLogin={navigateLogin} navigateSignUp={navigateSignUp} navigateGuest={navigateGuest} />}
+                element={<TitleScreen navigateLogin={navigateLogin} navigateSignUp={navigateSignUp} navigateGuest={navigateHome} />}
             />
             <Route
                 path="/login"
@@ -160,7 +171,10 @@ function App() {
                 path="/signup"
                 element={<SignUp handleSignUp={handleSignUp} navigateBack={navigateBack}/>}
             />
-
+            <Route
+                path="/home"
+                element={<Home navigateRated={handleGameStart} navigateBot={handleGameStart} navigatePuzzles={handleGameStart} navigateBack={navigateBack}/>}
+            />
             <Route
                 path="/game"
                 element={
