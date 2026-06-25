@@ -17,7 +17,7 @@ export const initialGameState = {
         black: { kingside: true, queenside: true }
     },
 
-    enPassantTarget: null,
+    enPassantTarget: null, // row, col, color
 
     selected: null,
     // row, col, moves -- currently selected piece and its legal moves

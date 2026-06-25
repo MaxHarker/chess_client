@@ -1,0 +1,15 @@
+{
+  "name": "analysis_engine",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "analysis_engine_bg.wasm",
+    "analysis_engine.js",
+    "analysis_engine.d.ts"
+  ],
+  "main": "analysis_engine.js",
+  "types": "analysis_engine.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
