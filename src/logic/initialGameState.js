@@ -24,5 +24,5 @@ export const initialGameState = {
 
     status: 'waiting', // waiting, playing, checkmate, stalemate
 
-    pendingPromotion: null
+    pendingPromotion: null // row, col, color
 }

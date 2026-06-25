@@ -1,7 +1,8 @@
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { initialGameState } from './logic/initialGameState.js'
-import { hasLegalMoves, isKingInCheck } from './logic/chessLogic.js'
+import { gameStateToFen } from './logic/fen.js'
+import { hasLegalMoves, isKingInCheck, tryMove } from './logic/chessLogic.js'
 
 import { io } from 'socket.io-client'
 const socket = io('https://chess-server-imx5.onrender.com')
@@ -19,6 +20,8 @@ import Home from './components/Home'
 import move from './assets/move.mp3'
 import capture from './assets/capture2.mp3'
 
+import init, { get_best_move } from './analysis/pkg/analysis_engine.js'
+
 function App() {
     const navigate = useNavigate()
 
@@ -28,6 +31,12 @@ function App() {
     const [matchmaking, setMatchmaking] = useState(null)
     const [countdown, setCountdown] = useState(null)
     const [queueNum, setQueueNum] = useState(0)
+    const [mode, setMode] = useState("online")
+    const [depth, setDepth] = useState(4)
+
+    useEffect(() => {
+        init()
+    }, [])
 
     useEffect(() => {
         socket.on('matchFound', ({ roomId, color }) => {
@@ -79,19 +88,138 @@ function App() {
     const location = useLocation();
 
     useEffect(() => {
-        // Lock scroll on TitleScreen only
-        if (location.pathname === "/") {
-            document.body.style.overflow = "hidden";
-        } else {
+        // Allow scroll on Home only
+        if (location.pathname == "/home") {
             document.body.style.overflow = "auto";
+        } else {
+            document.body.style.overflow = "hidden";
         }
     }, [location.pathname]);
 
+    function handleMove(from, to) {
+
+        const newBoard = tryMove(
+            from[0],
+            from[1],
+            to[0],
+            to[1],
+            gameState
+        );
+
+        if (!newBoard) return;
+
+        evaluateGameOver(newBoard);
+
+        // bot mode
+        if (mode === "bot") {
+
+            if (newBoard.status !== "playing") {
+                console.log("Game over!");
+                return;
+            }
+
+            if (newBoard.pendingPromotion) {
+                console.log("Pending promotion...");
+                return;
+            }
+
+            setTimeout(() => runBotMove(newBoard), 50);
+        }
+
+        // online mode
+        if (mode === "online") {
+            socket.emit("makeMove", { roomId, from, to });
+        }
+    }
+
+    async function runBotMove(board) {
+        const fen = gameStateToFen(board);
+
+        console.log('Engine thinking...')
+        const result = await get_best_move(fen, depth, board.turn === 'white' ? true : false);
+
+        const [move, score, nodes] = result.split(' ');
+
+        const [from, to] = move.split('-').map(Number);
+
+        console.log(`Bot move from ${from} to ${to}, score: ${score}, nodes: ${nodes}`);
+        const botBoard = tryMove(
+            Math.floor(from / 8),
+            from % 8,
+            Math.floor(to / 8),
+            to % 8,
+            board
+        );
+
+        if (botBoard.pendingPromotion) {
+            
+            botBoard.board[botBoard.pendingPromotion.row][botBoard.pendingPromotion.col] = `${botBoard.pendingPromotion.color}_queen`;
+
+            botBoard.pendingPromotion = null;
+
+            botBoard.turn =
+                botBoard.turn === 'white'
+                    ? 'black'
+                    : 'white';
+        }
+
+        if (botBoard) {
+            evaluateGameOver(botBoard);
+        }
+    }
+
+    function evaluateGameOver(newBoard) {
+        const turn = newBoard.turn;
+        const hasMoves = hasLegalMoves(turn, newBoard);
+        const inCheck = isKingInCheck(turn, newBoard);
+
+        let status = "playing";
+        let winner = null;
+
+        if (!hasMoves && inCheck) {
+            status = "checkmate";
+            winner = turn === "white" ? "black" : "white";
+        } else if (!hasMoves) {
+            status = "stalemate";
+        }
+
+        newBoard.status = status;
+        newBoard.winner = winner;
+
+        setGameState({ ...newBoard });
+    }
+
     function handlePromotion(piece) {
-        socket.emit('promotePawn', {
-            roomId,
-            piece
-        })
+        console.log(`Promoting to ${piece}`);
+        if (mode === "online") {
+            socket.emit('promotePawn', {
+                roomId,
+                piece
+            });
+            return;
+        }
+
+        if (mode === "bot") {
+            const newState = structuredClone(gameState);
+
+            const {
+                row: prom_row,
+                col: prom_col,
+                color: prom_color
+            } = newState.pendingPromotion;
+
+            newState.board[prom_row][prom_col] = `${prom_color}_${piece}`
+
+            newState.pendingPromotion = null;
+
+            newState.turn = newState.turn === 'white' ? 'black' : 'white'
+
+            setGameState(newState);
+
+            setTimeout(() => {
+                runBotMove(newState);
+            }, 50);
+        }
     }
 
     function handleRestart() {
@@ -101,13 +229,23 @@ function App() {
         setGameState(initialGameState)
         setRoomID(null)
         setPlayerColor(null)
+        setMatchmaking(null)
 
         navigate('/')
     }
 
+
     function handleGameStart() {
+        setMode("online")
         socket.emit('findMatch')
         setMatchmaking('searching')
+        navigate('/game')
+    }
+
+    function handleBotStart(){
+        setMode("bot")
+        setGameState({...initialGameState, status: "playing"})
+        setPlayerColor("white")
         navigate('/game')
     }
 
@@ -173,7 +311,7 @@ function App() {
             />
             <Route
                 path="/home"
-                element={<Home navigateRated={handleGameStart} navigateBot={handleGameStart} navigatePuzzles={handleGameStart} navigateBack={navigateBack}/>}
+                element={<Home navigateRated={handleGameStart} navigateBot={handleBotStart} navigatePuzzles={handleGameStart} navigateBack={navigateBack}/>}
             />
             <Route
                 path="/game"
@@ -182,8 +320,7 @@ function App() {
                         <Chessboard
                             gameState={gameState}
                             setGameState={setGameState}
-                            socket={socket}
-                            roomId={roomId}
+                            handleMove={handleMove}
                             playerColor={playerColor}
                         />
 

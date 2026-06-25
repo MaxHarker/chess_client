@@ -6,8 +6,7 @@ import { legalMoves, isKingInCheck, findKing } from '../logic/chessLogic'
 function Chessboard({
     gameState,
     setGameState,
-    socket,
-    roomId,
+    handleMove,
     playerColor
 }) {
     const highlights = gameState.selected ? gameState.selected.moves : []
@@ -55,14 +54,7 @@ function Chessboard({
             ]
             const to = [row, col]
 
-            socket.emit('makeMove', {
-                roomId,
-                from,
-                to
-            })
-
-            setGameState({ ...gameState, selected: null })
-            return
+            handleMove(from, to)
         }
     }
 
@@ -102,13 +94,7 @@ function Chessboard({
 
         const data = JSON.parse(e.dataTransfer.getData('text/plain'))
 
-        socket.emit('makeMove', {
-            roomId,
-            from: [data.row, data.col],
-            to: [toRow, toCol]
-        })
-
-        setGameState({ ...gameState, selected: null })
+        handleMove([data.row, data.col], [toRow, toCol])
     }
     
     const displayBoard =
