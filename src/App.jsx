@@ -5,8 +5,8 @@ import { gameStateToFen } from './logic/fen.js'
 import { hasLegalMoves, isKingInCheck, tryMove } from './logic/chessLogic.js'
 
 import { io } from 'socket.io-client'
-const socket = io('https://chess-server-imx5.onrender.com')
-//const socket = io('http://localhost:3001')
+//const socketLink = "https://chess-server-imx5.onrender.com"
+const socketLink = "http://localhost:3001"
 
 import Chessboard from './components/Chessboard'
 import GameOver from './components/GameOver'
@@ -34,11 +34,45 @@ function App() {
     const [mode, setMode] = useState("online")
     const [depth, setDepth] = useState(4)
 
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem("user")
+            return savedUser
+                ? JSON.parse(savedUser)
+                : null
+        })
+
+    const [socket, setSocket] = useState(null)
+
+    useEffect(() => {
+
+        const savedUser = localStorage.getItem("user")
+
+        const newSocket = io(socketLink, {
+            auth: {
+                userId: savedUser
+                    ? JSON.parse(savedUser).id
+                    : null
+            }
+        })
+
+        setSocket(newSocket)
+
+        return () => {
+            newSocket.disconnect()
+        }
+
+    }, [])
+
     useEffect(() => {
         init()
     }, [])
 
+    console.log(user)
+
     useEffect(() => {
+
+        if (!socket) return
+        
         socket.on('matchFound', ({ roomId, color }) => {
             setRoomID(roomId)
             setPlayerColor(color)
@@ -51,6 +85,7 @@ function App() {
 
         socket.on('gameState', (state) => {
             setGameState(state)
+            console.log("Received reconnect game state:", state)
         })
 
         socket.on('gameStart', ({ gameState, startTime }) => {
@@ -83,7 +118,7 @@ function App() {
             socket.off('gameStart')
             socket.off('moveMade')
         }
-    }, [])
+    }, [socket])
 
     const location = useLocation();
 
@@ -223,19 +258,26 @@ function App() {
     }
 
     function handleRestart() {
-        socket.disconnect()
-        socket.connect()
-
         setGameState(initialGameState)
         setRoomID(null)
         setPlayerColor(null)
         setMatchmaking(null)
 
-        navigate('/')
+        if (mode === "online") {
+            socket.emit('leaveGame', { roomId })
+        }
+
+        navigateHome()
     }
 
 
     function handleGameStart() {
+
+        if (!user) {
+            navigate('/login')
+            return
+        }
+
         setMode("online")
         socket.emit('findMatch')
         setMatchmaking('searching')
@@ -257,7 +299,13 @@ function App() {
         navigate('/signup')
     }
 
-    function navigateBack() {
+    function signOut() {
+        setUser(null)
+        localStorage.removeItem('user')
+        navigateTitle()
+    }
+
+    function navigateTitle() {
         navigate('/')
     }
 
@@ -285,6 +333,14 @@ function App() {
             socket.emit('login', { username, password }, (response) => {
                 if (response.success) {
                     console.log('Login successful!')
+                    setUser(response.user)
+
+                    localStorage.setItem('user', JSON.stringify(response.user))
+                    socket.auth = { userId: response.user.id }
+
+                    socket.disconnect()
+                    socket.connect()
+
                     navigateHome()
                     resolve(null)
                 } else {
@@ -303,15 +359,15 @@ function App() {
             />
             <Route
                 path="/login"
-                element={<Login handleLogin={handleLogin} navigateBack={navigateBack}/>}
+                element={<Login handleLogin={handleLogin} navigateTitle={navigateTitle}/>}
             />
             <Route
                 path="/signup"
-                element={<SignUp handleSignUp={handleSignUp} navigateBack={navigateBack}/>}
+                element={<SignUp handleSignUp={handleSignUp} navigateTitle={navigateTitle}/>}
             />
             <Route
                 path="/home"
-                element={<Home navigateRated={handleGameStart} navigateBot={handleBotStart} navigatePuzzles={handleGameStart} navigateBack={navigateBack}/>}
+                element={<Home navigateRated={handleGameStart} navigateBot={handleBotStart} navigatePuzzles={handleGameStart} signOut={signOut}/>}
             />
             <Route
                 path="/game"

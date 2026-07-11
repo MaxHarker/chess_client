@@ -22,7 +22,7 @@
 
     font-family: "Playfair Display", serif;
     text-align: center;
-    margin: 20px 0;
+    margin: 20px 0 40px 0;
 }
 
 /* Container for mode cards */
@@ -78,28 +78,6 @@
 
 .home-buttons button:first-child:hover {
     background: #5a5a5a;
-}
-
-/* Logout / back button */
-.home-screen .logout-button {
-    margin-top: 40px;
-
-    background: none;
-    border: none;
-
-    color: #cccccc;
-
-    font-size: 14px;
-    text-decoration: underline;
-
-    cursor: pointer;
-
-    transition: color 0.15s ease, transform 0.15s ease;
-}
-
-.home-screen .logout-button:hover {
-    color: white;
-    transform: scale(1.05);
 }
 
 /* Mobile adjustments */

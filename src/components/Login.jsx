@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import './Login.css'
 
-function Login({ handleLogin, navigateBack }) {
+function Login({ handleLogin, navigateTitle }) {
 
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -69,7 +69,7 @@ function Login({ handleLogin, navigateBack }) {
                     Sign In
                 </button>
             </form>
-            <button className="back-button" onClick={navigateBack}>
+            <button className="back-button" onClick={navigateTitle}>
                 Back
             </button>
         </div>

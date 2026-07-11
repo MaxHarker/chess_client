@@ -1,9 +1,9 @@
 import "./Home.css"
 
-function Home({ navigateRated, navigateBot, navigatePuzzles, navigateBack }) {
+function Home({ navigateRated, navigateBot, navigatePuzzles, signOut }) {
     return (
         <div className="home-screen">
-            <h1>Welcome {sessionStorage.getItem('username')}</h1>
+            <h1>Welcome</h1>
 
             <div className="home-buttons">
                 <button onClick={navigateRated}>
@@ -18,7 +18,7 @@ function Home({ navigateRated, navigateBot, navigatePuzzles, navigateBack }) {
                     Puzzles
                 </button>
 
-                <button onClick={navigateBack}>
+                <button onClick={signOut}>
                     Log Out
                 </button>
             </div>
