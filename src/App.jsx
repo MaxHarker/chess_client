@@ -5,8 +5,8 @@ import { gameStateToFen } from './logic/fen.js'
 import { hasLegalMoves, isKingInCheck, tryMove } from './logic/chessLogic.js'
 
 import { io } from 'socket.io-client'
-//const socketLink = "https://chess-server-imx5.onrender.com"
-const socketLink = "http://localhost:3001"
+const socketLink = "https://chess-server-imx5.onrender.com"
+//const socketLink = "http://localhost:3001"
 
 import Chessboard from './components/Chessboard'
 import GameOver from './components/GameOver'
