@@ -38,6 +38,7 @@
 }
 
 .square img {
+    display: block;
     width: 80%;
     height: 80%;
     object-fit: contain;

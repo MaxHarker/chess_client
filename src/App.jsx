@@ -1,8 +1,9 @@
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { initialGameState } from './logic/initialGameState.js'
 import { gameStateToFen } from './logic/fen.js'
 import { hasLegalMoves, isKingInCheck, tryMove } from './logic/chessLogic.js'
+import './App.css'
 
 import { io } from 'socket.io-client'
 const socketLink = "https://chess-server-imx5.onrender.com"
@@ -16,6 +17,7 @@ import SignUp from './components/SignUp'
 import PromotionModal from './components/PromotionModal'
 import Matchmaking from './components/Matchmaking'
 import Home from './components/Home'
+import Navbar from './components/Navbar'
 
 import move from './assets/move.mp3'
 import capture from './assets/capture2.mp3'
@@ -300,6 +302,7 @@ function App() {
     }
 
     function signOut() {
+        console.log("Signing out...")
         setUser(null)
         localStorage.removeItem('user')
         navigateTitle()
@@ -355,48 +358,75 @@ function App() {
         <Routes>
             <Route
                 path="/"
-                element={<TitleScreen navigateLogin={navigateLogin} navigateSignUp={navigateSignUp} navigateGuest={navigateHome} />}
+                element={
+                    user
+                        ? <Navigate to="/home" replace />
+                        : (
+                            <TitleScreen
+                                navigateLogin={navigateLogin}
+                                navigateSignUp={navigateSignUp}
+                                navigateGuest={navigateHome}
+                            />
+                        )
+                }
             />
             <Route
                 path="/login"
-                element={<Login handleLogin={handleLogin} navigateTitle={navigateTitle}/>}
+                element={
+                    user
+                        ? <Navigate to="/home" replace />
+                        : <Login handleLogin={handleLogin} navigateTitle={navigateTitle} />
+                }
             />
+
             <Route
                 path="/signup"
-                element={<SignUp handleSignUp={handleSignUp} navigateTitle={navigateTitle}/>}
+                element={
+                    user
+                        ? <Navigate to="/home" replace />
+                        : <SignUp handleSignUp={handleSignUp} navigateTitle={navigateTitle} />
+                }
             />
             <Route
                 path="/home"
-                element={<Home navigateRated={handleGameStart} navigateBot={handleBotStart} navigatePuzzles={handleGameStart} signOut={signOut}/>}
+                element={
+                    <>
+                    {user && <Navbar username={user?.username} signOut={signOut} />}
+                    <Home navigateRated={handleGameStart} navigateBot={handleBotStart} navigatePuzzles={handleGameStart} signOut={signOut}/>
+                    </>
+                }
             />
             <Route
                 path="/game"
                 element={
-                    <div className="game-container">
-                        <Chessboard
-                            gameState={gameState}
-                            setGameState={setGameState}
-                            handleMove={handleMove}
-                            playerColor={playerColor}
-                        />
-
-                        {matchmaking && <Matchmaking state={matchmaking} countdown={countdown} queueNum={queueNum} onCancel={handleRestart} />}
-
-                        {(gameState.status === 'checkmate' || gameState.status === 'stalemate') && (
-                            <GameOver 
-                                status={gameState.status} 
-                                winner={gameState.winner == playerColor ? 'win' : 'loss'}
-                                onRestart={handleRestart}
+                    <div className="game-page">
+                        {user && <Navbar username={user?.username} signOut={signOut} />}
+                        <div className="game-container">
+                            <Chessboard
+                                gameState={gameState}
+                                setGameState={setGameState}
+                                handleMove={handleMove}
+                                playerColor={playerColor}
                             />
-                        )}
 
-                        {gameState.pendingPromotion &&
-                            gameState.pendingPromotion.color === playerColor && (
-                                <PromotionModal
-                                    color={gameState.pendingPromotion.color}
-                                    onSelect={handlePromotion}
+                            {matchmaking && <Matchmaking state={matchmaking} countdown={countdown} queueNum={queueNum} onCancel={handleRestart} />}
+
+                            {(gameState.status === 'checkmate' || gameState.status === 'stalemate') && (
+                                <GameOver 
+                                    status={gameState.status} 
+                                    winner={gameState.winner == playerColor ? 'win' : 'loss'}
+                                    onRestart={handleRestart}
                                 />
                             )}
+
+                            {gameState.pendingPromotion &&
+                                gameState.pendingPromotion.color === playerColor && (
+                                    <PromotionModal
+                                        color={gameState.pendingPromotion.color}
+                                        onSelect={handlePromotion}
+                                    />
+                                )}
+                        </div>
                     </div>
                 }
             />
