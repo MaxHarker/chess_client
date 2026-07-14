@@ -93,7 +93,30 @@ function App() {
 
         socket.on('gameState', (state) => {
             setGameState(state)
-            console.log("Received game state:", state)
+
+            if (state.status === 'checkmate' || state.status === 'stalemate') {
+                const currentPlayer = state.players?.find(
+                    p => p.userId === user?.id
+                )
+
+                if (currentPlayer) {
+
+                    setUser(prevUser => {
+
+                        const updatedUser = {
+                            ...prevUser,
+                            rating: currentPlayer.rating
+                        }
+
+                        localStorage.setItem(
+                            "user",
+                            JSON.stringify(updatedUser)
+                        )
+
+                        return updatedUser
+                    })
+                }
+            }
         })
 
         socket.on('gameStart', (startTime) => {
@@ -387,6 +410,15 @@ function App() {
             : gameState.players?.find(
                 p => p.color !== playerColor
             );
+    const me =
+        mode === "bot"
+            ? {
+                username: user?.username || "Guest",
+                rating: user?.rating || "∞"
+            }
+            : gameState.players?.find(
+                p => p.color === playerColor
+            );
     
     return (
         <Routes>
@@ -447,7 +479,7 @@ function App() {
                                     playerColor={playerColor}
                                 />
 
-                                <PlayerInfo player={user} active={gameState.turn === playerColor} />
+                                <PlayerInfo player={me} active={gameState.turn === playerColor} />
 
                             </div>
 
