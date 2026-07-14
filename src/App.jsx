@@ -23,8 +23,6 @@ import PlayerInfo from './components/PlayerInfo'
 import move from './assets/move.mp3'
 import capture from './assets/capture2.mp3'
 
-import init, { get_best_move } from './analysis/pkg/analysis_engine.js'
-
 function App() {
     const navigate = useNavigate()
 
@@ -65,10 +63,6 @@ function App() {
             newSocket.disconnect()
         }
 
-    }, [])
-
-    useEffect(() => {
-        init()
     }, [])
 
     useEffect(() => {
