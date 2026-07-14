@@ -18,6 +18,7 @@ import PromotionModal from './components/PromotionModal'
 import Matchmaking from './components/Matchmaking'
 import Home from './components/Home'
 import Navbar from './components/Navbar'
+import PlayerInfo from './components/PlayerInfo'
 
 import move from './assets/move.mp3'
 import capture from './assets/capture2.mp3'
@@ -35,6 +36,7 @@ function App() {
     const [queueNum, setQueueNum] = useState(0)
     const [mode, setMode] = useState("online")
     const [depth, setDepth] = useState(4)
+    const [engineWorker, setEngineWorker] = useState(null)
 
     const [user, setUser] = useState(() => {
         const savedUser = localStorage.getItem("user")
@@ -69,7 +71,17 @@ function App() {
         init()
     }, [])
 
-    console.log(user)
+    useEffect(() => {
+        const worker = new Worker(
+            new URL('./analysis/engineWorker.js', import.meta.url),
+            { type: 'module' }
+        )
+
+        setEngineWorker(worker)
+
+        return () => worker.terminate()
+
+    }, [])
 
     useEffect(() => {
 
@@ -87,12 +99,11 @@ function App() {
 
         socket.on('gameState', (state) => {
             setGameState(state)
-            console.log("Received reconnect game state:", state)
+            console.log("Received game state:", state)
         })
 
-        socket.on('gameStart', ({ gameState, startTime }) => {
+        socket.on('gameStart', (startTime) => {
             console.log("Game starting!")
-            setGameState(gameState)
             setMatchmaking('starting')
 
             const interval = setInterval(() => {
@@ -169,11 +180,30 @@ function App() {
         }
     }
 
+    function getBotMove(fen, depth, isWhite) {
+        return new Promise((resolve) => {
+
+            engineWorker.onmessage = (event) => {
+                resolve(event.data)
+            }
+
+            engineWorker.postMessage({
+                fen,
+                depth,
+                isWhite
+            })
+        })
+    }
+
     async function runBotMove(board) {
         const fen = gameStateToFen(board);
 
         console.log('Engine thinking...')
-        const result = await get_best_move(fen, depth, board.turn === 'white' ? true : false);
+        const result = await getBotMove(
+            fen,
+            depth,
+            board.turn === 'white'
+        )
 
         const [move, score, nodes] = result.split(' ');
 
@@ -353,6 +383,16 @@ function App() {
             })
         })
     }
+
+    const opponent =
+        mode === "bot"
+            ? {
+                username: "Chad",
+                rating: 800
+            }
+            : gameState.players?.find(
+                p => p.color !== playerColor
+            );
     
     return (
         <Routes>
@@ -402,12 +442,20 @@ function App() {
                     <div className="game-page">
                         {user && <Navbar username={user?.username} signOut={signOut} />}
                         <div className="game-container">
-                            <Chessboard
-                                gameState={gameState}
-                                setGameState={setGameState}
-                                handleMove={handleMove}
-                                playerColor={playerColor}
-                            />
+                            <div className="board-area">
+
+                                <PlayerInfo player={opponent} active={gameState.turn !== playerColor} />
+
+                                <Chessboard
+                                    gameState={gameState}
+                                    setGameState={setGameState}
+                                    handleMove={handleMove}
+                                    playerColor={playerColor}
+                                />
+
+                                <PlayerInfo player={user} active={gameState.turn === playerColor} />
+
+                            </div>
 
                             {matchmaking && <Matchmaking state={matchmaking} countdown={countdown} queueNum={queueNum} onCancel={handleRestart} />}
 
