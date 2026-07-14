@@ -9,7 +9,13 @@ self.onmessage = async (event) => {
         initialized = true
     }
 
-    const move = get_best_move(event.data)
+    const { fen, depth, isWhite } = event.data
+
+    const move = get_best_move(
+        fen,
+        depth,
+        isWhite
+    )
 
     self.postMessage(move)
 }
