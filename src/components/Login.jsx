@@ -47,6 +47,7 @@ function Login({ handleLogin, navigateTitle }) {
                     ref={usernameRef}
                     type="text"
                     placeholder="Username"
+                    aria-label="Username"
                     value={username}
                     onChange={(e) => {
                         usernameRef.current.setCustomValidity('')
@@ -58,6 +59,7 @@ function Login({ handleLogin, navigateTitle }) {
                     ref={passwordRef}
                     type="password"
                     placeholder="Password"
+                    aria-label="Password"
                     value={password}
                     onChange={(e) => {
                         passwordRef.current.setCustomValidity('')
